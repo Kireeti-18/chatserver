@@ -1,12 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chat App</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: #f2fbff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    button {
+      color: #fff;
+      background: #2c9ecf;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 20px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1b82b0;
+    }
+
+    #usernamePage {
+      background: #fff;
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      width: 300px;
+    }
+
+    #usernameInput {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      margin-bottom: 20px;
+      font-size: 16px;
+    }
+
+    #chatPage {
+      height: 100vh;
+      display: none;
+      padding-top: 40px;
+      flex-direction: column;
+    }
+
+    #chatPageContainer {
+      display: flex;
+      flex-direction: column;
+      height: 90vh;
+      width: 900px;
+      max-width: 95vw;
+      background: #fff;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+
+    #chatHeader {
+      background: #2c9ecf;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    #chatBody {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    #sidebar {
+      width: 200px;
+      border-right: 1px solid #ddd;
+      background: #f9f9f9;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #sidebar h4 {
+      margin: 10px;
+      text-align: center;
+    }
+
+    #userItems {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .user {
+      padding: 8px;
+      margin: 5px;
+      background: #e8f4fa;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      display: flex;
+      align-items: center;
+    }
+
+    .user:hover {
+      background: #cbe9f7;
+    }
+
+    .user.active {
+      background: #2c9ecf !important;
+      color: white;
+      font-weight: bold;
+    }
+
+    #chatContainers {
+      width: 100%;
+    }
+
+    .chatContainer {
+      height: calc(100% - 20px);
+      padding: 15px;
+      overflow-y: scroll;
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      background: #f0faff;
+    }
+
+    .chatContainer.active {
+      display: flex;
+    }
+
+    .bubbleBlock {
+      display: flex;
+      flex-direction: column;
+      max-width: 70%;
+      margin: 2px 0;
+    }
+
+    .bubbleBlock.sent {
+      align-self: flex-end;
+      text-align: right;
+    }
+
+    .bubbleBlock.received {
+      align-self: flex-start;
+      text-align: left;
+    }
+
+    .sender {
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      margin: 0 5px 3px;
+    }
+
+    .message {
+      display: inline-block;
+      padding: 10px 14px;
+      border-radius: 18px;
+      font-size: 15px;
+      line-height: 1.4;
+      word-wrap: break-word;
+    }
+
+    .sent .message {
+      background: #2c9ecf;
+      color: white;
+      border-bottom-right-radius: 5px;
+    }
+
+    .received .message {
+      background: #e5e5ea;
+      color: black;
+      border-bottom-left-radius: 5px;
+    }
+
+    .system {
+      align-self: center;
+      background: #eee;
+      font-style: italic;
+      padding: 5px 10px;
+      border-radius: 10px;
+      font-size: 13px;
+      color: #555;
+      margin: 5px 0;
+    }
+
+    #chatInput {
+      display: flex;
+      border-top: 1px solid #ddd;
+      padding: 10px;
+      background: #fff;
+    }
+
+    #chatInput textarea {
+      flex: 1;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 15px;
+      resize: none;
+      outline: none;
+      margin-right: 10px;
+    }
+
+    .username_error {
+      color: #c00;
+      margin-top: 8px;
+      display: none;
+      font-size: 14px;
+    }
+
+    .user .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #29c02f;
+      display: none;
+      margin-left: auto;
+      margin-right: 5px;
+    }
+
+    .user.hasDot .dot {
+      display: block;
+    }
+  </style>
+</head>
 <body>
-  <div class="container"></div>
-  
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <div id="usernamePage">
+    <h2>Enter Username</h2>
+    <input type="text" id="usernameInput" placeholder="Your name..."/>
+    <p id="usernameError" class="username_error"></p>
+    <button onclick="enterChat()">Join Chat</button>
+  </div>
+
+  <div id="chatPage">
+    <div id="currentUsername" style="font-size:16px; font-weight:600; opacity:0.9; margin-left:auto; padding-bottom: 10px; text-align: center; width: 100%;">
+      username: —
+    </div>
+    <div id="chatPageContainer">
+      <div id="chatHeader">Chat Room</div>
+      <div id="chatBody">
+        <div id="sidebar">
+          <h4>Users</h4>
+          <div id="userItems"></div>
+        </div>
+        <div id="chatContainers"></div>
+      </div>
+      <div id="chatInput">
+        <textarea id="messageInput" rows="2" placeholder="Type a message..."></textarea>
+        <button onclick="sendMessage()">Send</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    $(document).ready(function() {
-      $(".container").append("<div>haso</div>");
+    let username = "";
+    let ws = null;
+    let users = [];
+    let activeTarget = "all";
+    let chatContainers = {};
+
+    document.getElementById("usernameInput").addEventListener("input", function() {
+      const errEl = document.getElementById("usernameError");
+      if (errEl) {
+        errEl.style.display = "none";
+        errEl.innerText = "";
+      }
     });
+
+    function enterChat() {
+      const inputEl = document.getElementById("usernameInput");
+      const errEl = document.getElementById("usernameError");
+      errEl.style.display = "none";
+      errEl.innerText = "";
+
+      const inputVal = inputEl.value.trim();
+      if (!inputVal) {
+        errEl.innerText = "Please enter a username.";
+        errEl.style.display = "block";
+        return;
+      }
+
+      username = inputVal;
+      document.getElementById("currentUsername").innerText = "Username: " + username;
+
+      ws = new WebSocket("ws://65.1.148.47:3000");
+      ws.onopen = function() {
+        ws.send(JSON.stringify({ type: "join", username: username }));
+      };
+      ws.onmessage = function(event) {
+        handleIncoming(event.data);
+      };
+      ws.onclose = function() {
+        if (document.getElementById("chatPage").style.display === "" || document.getElementById("chatPage").style.display === "none") {
+          errEl.innerText = "Connection closed. Try again.";
+          errEl.style.display = "block";
+        } else {
+          addSystemMessage("all", "Disconnected");
+        }
+      };
+      ws.onerror = function() {
+        errEl.innerText = "Unable to connect to server.";
+        errEl.style.display = "block";
+      };
+    }
+
+    function getContainer(target) {
+      if (!chatContainers[target]) {
+        const div = document.createElement("div");
+        div.className = "chatContainer";
+        div.id = "chat_" + target;
+        document.getElementById("chatContainers").appendChild(div);
+        chatContainers[target] = div;
+      }
+      return chatContainers[target];
+    }
+
+    function switchChat(target) {
+      activeTarget = target;
+      document.getElementById("chatHeader").innerText = target === "all" ? "Broadcast Room" : "Private Chat with " + target;
+      for (let k in chatContainers) {
+        chatContainers[k].classList.remove("active");
+      }
+      getContainer(target).classList.add("active");
+    }
+
+    function handleIncoming(raw) {
+      let data;
+      try {
+        data = JSON.parse(raw);
+      } catch (e) {
+        return;
+      }
+
+      if (data.type === "error") {
+        const errEl = document.getElementById("usernameError");
+        if (errEl) {
+          if (data.message === "username_taken") {
+            errEl.innerText = "Username already exists. Choose a different name.";
+          } else {
+            errEl.innerText = "Error: " + (data.message || "unknown");
+          }
+          errEl.style.display = "block";
+        }
+        return;
+      }
+
+      if (data.type === "userlist") {
+        const errEl = document.getElementById("usernameError");
+        if (errEl) {
+          errEl.style.display = "none";
+          errEl.innerText = "";
+        }
+
+        if (Array.isArray(data.users)) {
+          users = ["Broadcast"].concat(data.users.filter(function(u) {
+            return u !== username;
+          }));
+        } else {
+          users = ["Broadcast"];
+        }
+        renderUsers();
+
+        if (Array.isArray(data.users) && data.users.indexOf(username) !== -1) {
+          const chatPage = document.getElementById("chatPage");
+          const usernamePage = document.getElementById("usernamePage");
+          if (chatPage && usernamePage && (chatPage.style.display === "" || chatPage.style.display === "none")) {
+            usernamePage.style.display = "none";
+            chatPage.style.display = "flex";
+            document.getElementById("chatHeader").innerText = "Broadcast Room";
+            getContainer("all");
+            switchChat("all");
+          }
+        }
+        return;
+      }
+
+      if (data.type === "message") {
+        const mine = data.from === username;
+        const target = data.to && data.to !== "all" ? (mine ? data.to : data.from) : "all";
+        const container = getContainer(target);
+
+        const block = document.createElement("div");
+        block.className = "bubbleBlock " + (mine ? "sent" : "received");
+
+        let showSender = false;
+        if (target === "all" && !mine) {
+          showSender = true;
+          const lastChild = container.lastElementChild;
+          if (lastChild && lastChild.classList.contains("received")) {
+            const senderEl = lastChild.querySelector(".sender");
+            const lastSender = senderEl ? senderEl.innerText : null;
+            if (lastSender === data.from) {
+              showSender = false;
+            }
+          }
+        }
+        if (showSender) {
+          const sender = document.createElement("div");
+          sender.className = "sender";
+          sender.innerText = data.from;
+          block.appendChild(sender);
+        }
+
+        const msg = document.createElement("div");
+        msg.className = "message";
+        msg.innerText = data.text;
+        block.appendChild(msg);
+
+        container.appendChild(block);
+        container.scrollTop = container.scrollHeight;
+
+        if (!mine) {
+          const contact = data.to !== "all" ? data.from : "all";
+          if (contact !== activeTarget) {
+            const usersDiv = document.getElementById("userItems").children;
+            for (let i = 0; i < usersDiv.length; i++) {
+              const item = usersDiv[i];
+              if (item.id === contact) {
+                item.classList.add("hasDot");
+              }
+            }
+          }
+        }
+
+        return;
+      }
+
+      if (data.type === "join") {
+        addSystemMessage("all", data.username + " joined");
+        return;
+      }
+
+      if (data.type === "leave") {
+        addSystemMessage("all", data.username + " left");
+        return;
+      }
+    }
+
+    function addSystemMessage(target, text) {
+      const container = getContainer(target);
+      const div = document.createElement("div");
+      div.className = "system";
+      div.innerText = text;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function renderUsers() {
+      let userItems = document.getElementById("userItems");
+      userItems.innerHTML = "";
+      users.forEach(function(u) {
+        let target = u === "Broadcast" ? "all" : u;
+        let div = document.createElement("div");
+        div.className = "user" + (target === activeTarget ? " active" : "");
+        div.id = target;
+        div.innerText = u;
+        div.onclick = function() {
+          const userContact = document.getElementById(target);
+          if (userContact) {
+            userContact.classList.remove("hasDot");
+          }
+          const currentActiveContact = document.querySelector(".user.active");
+          if (currentActiveContact) {
+            currentActiveContact.classList.remove("active");
+          }
+          switchChat(target);
+          if (userContact) {
+            userContact.classList.add("active");
+          }
+        };
+        let dot = document.createElement("div");
+        dot.className = "dot";
+        div.appendChild(dot);
+        userItems.appendChild(div);
+        getContainer(target);
+      });
+      switchChat(activeTarget);
+    }
+
+    function sendMessage() {
+      const textArea = document.getElementById("messageInput");
+      const message = textArea.value.trim();
+      if (!message || !ws) {
+        return;
+      }
+
+      let payload = {
+        type: "message",
+        from: username,
+        to: activeTarget,
+        text: message
+      };
+      ws.send(JSON.stringify(payload));
+      textArea.value = "";
+    }
   </script>
-
 </body>
-
+</html>
